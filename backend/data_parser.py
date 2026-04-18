@@ -17,6 +17,19 @@ PRICING = {
 DEFAULT_PRICING = {'input': 3.0, 'output': 15.0, 'cache_creation': 3.75, 'cache_read': 0.30}
 
 
+def get_pricing(model: str) -> dict:
+    if model in PRICING:
+        return PRICING[model]
+    m = model.lower()
+    if 'opus' in m:
+        return PRICING['claude-opus-4-6']
+    if 'haiku' in m:
+        return PRICING['claude-haiku-4-5-20251001']
+    if 'sonnet' in m:
+        return PRICING['claude-sonnet-4-6']
+    return DEFAULT_PRICING
+
+
 def days_to_cutoff_iso(days) -> str | None:
     if days is None:
         return None
@@ -27,7 +40,7 @@ def days_to_cutoff_iso(days) -> str | None:
 def compute_cost(tokens_by_model: dict) -> float:
     total = 0.0
     for model, t in tokens_by_model.items():
-        p = PRICING.get(model, DEFAULT_PRICING)
+        p = get_pricing(model)
         total += (
             t.get('input', 0) * p['input'] +
             t.get('output', 0) * p['output'] +
@@ -374,6 +387,7 @@ def get_full_dashboard_data(days=None) -> dict:
                 'cache_creation': tok.get('cache_creation', 0),
                 'cache_read':     tok.get('cache_read', 0),
             },
+            'by_model': by_model,
             'cost_usd': cost,
         })
 
@@ -394,7 +408,7 @@ def get_full_dashboard_data(days=None) -> dict:
     model_usage = {}
     total_period_cost = 0.0
     for model, t in global_by_model.items():
-        p = PRICING.get(model, DEFAULT_PRICING)
+        p = get_pricing(model)
         cost = round((
             t['input'] * p['input'] +
             t['output'] * p['output'] +
@@ -414,7 +428,7 @@ def get_full_dashboard_data(days=None) -> dict:
     stats_model_raw = stats.get('modelUsage', {})
     alltime_cost = 0.0
     for model, u in stats_model_raw.items():
-        p = PRICING.get(model, DEFAULT_PRICING)
+        p = get_pricing(model)
         alltime_cost += (
             (u.get('inputTokens', 0) or 0) * p['input'] +
             (u.get('outputTokens', 0) or 0) * p['output'] +

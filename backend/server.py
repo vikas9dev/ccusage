@@ -1,10 +1,10 @@
 import json
 import mimetypes
 import os
+import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
-
 
 def _load_env(env_file: str):
     if not os.path.exists(env_file):
@@ -26,6 +26,7 @@ _load_env(os.path.abspath(_ENV_FILE))
 
 import data_parser  # noqa: E402 — import after env is loaded
 
+VERSION    = os.environ.get('APP_VERSION', 'dev')
 PORT       = int(os.environ.get('BACKEND_PORT', 9001))
 STATIC_DIR = os.environ.get('STATIC_DIR', '')
 
@@ -38,7 +39,15 @@ def _get_mtimes():
     history_file = os.path.join(claude_dir, 'history.jsonl')
     projects_dir = os.path.join(claude_dir, 'projects')
     h = os.path.getmtime(history_file) if os.path.exists(history_file) else 0
-    p = os.path.getmtime(projects_dir) if os.path.isdir(projects_dir)  else 0
+    p = 0
+    if os.path.isdir(projects_dir):
+        for root, _, files in os.walk(projects_dir):
+            for f in files:
+                if f.endswith('.jsonl'):
+                    try:
+                        p = max(p, os.path.getmtime(os.path.join(root, f)))
+                    except OSError:
+                        pass
     return h, p
 
 
@@ -115,10 +124,11 @@ class Handler(BaseHTTPRequestHandler):
 
             elif path == '/health':
                 self._send_json({
-                    'status':         'ok',
-                    'cached_keys':    list(_cache.keys()),
+                    'status':          'ok',
+                    'version':         VERSION,
+                    'cached_keys':     list(_cache.keys()),
                     'claude_data_dir': data_parser._get_claude_dir(),
-                    'port':           PORT,
+                    'port':            PORT,
                 })
 
             elif STATIC_DIR:
@@ -140,12 +150,22 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json({'error': str(e)}, 500)
 
 
+def _prewarm():
+    try:
+        get_cached(days=None)
+        get_cached(days=7)
+        get_cached(days=30)
+    except Exception:
+        pass
+
 if __name__ == '__main__':
     claude_dir = data_parser._get_claude_dir()
     print('Claude Usage Dashboard — API server')
+    print(f'  Version:         {VERSION}')
     print(f'  Port:            {PORT}')
     print(f'  Claude data dir: {claude_dir}')
     print(f'  Static dir:      {STATIC_DIR or "(dev mode — Vite on 5173)"}')
+    threading.Thread(target=_prewarm, daemon=True).start()
     server = ThreadingHTTPServer(('', PORT), Handler)
     try:
         server.serve_forever()

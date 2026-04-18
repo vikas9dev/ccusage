@@ -72,12 +72,16 @@ RUN npm run build
 # Stage 2 — Python backend + built static files
 FROM python:3.11-slim
 WORKDIR /app
+
+ARG APP_VERSION=dev
+
 COPY backend/ ./backend/
 COPY --from=frontend-build /build/dist ./dist
 
 ENV BACKEND_PORT=9001
 ENV CLAUDE_DATA_DIR=/claude-data
 ENV STATIC_DIR=/app/dist
+ENV APP_VERSION=${APP_VERSION}
 
 EXPOSE ${BACKEND_PORT}
 

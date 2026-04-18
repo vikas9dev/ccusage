@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import { readFileSync, existsSync } from 'fs'
 import { resolve } from 'path'
 
+const pkg = JSON.parse(readFileSync('./package.json', 'utf8'))
+
 function loadRootEnv() {
   const envFile = resolve(__dirname, '../.env')
   if (!existsSync(envFile)) return {}
@@ -23,9 +25,13 @@ export default defineConfig(() => {
 
   return {
     plugins: [react()],
+    define: { __APP_VERSION__: JSON.stringify(pkg.version) },
     server: {
       port: frontendPort,
-      proxy: { '/api': `http://localhost:${backendPort}` }
+      proxy: {
+        '/api':    `http://localhost:${backendPort}`,
+        '/health': `http://localhost:${backendPort}`,
+      }
     }
   }
 })

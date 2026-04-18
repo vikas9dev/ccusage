@@ -7,18 +7,8 @@ const fmtT = (n) => {
 }
 const fmtCost = (n) => n != null ? `$${n.toFixed(2)}` : '—'
 
-const MODEL_LABELS = {
-  'claude-opus-4-6':           'Opus 4',
-  'claude-sonnet-4-6':         'Sonnet 4.6',
-  'claude-haiku-4-5-20251001': 'Haiku 4.5',
-}
-const MODEL_COLORS = {
-  'claude-opus-4-6':           '#7C3AED',
-  'claude-sonnet-4-6':         '#0891B2',
-  'claude-haiku-4-5-20251001': '#059669',
-}
-
 import InfoTooltip, { TOKEN_DESCRIPTIONS } from './InfoTooltip'
+import { getModelLabel, getModelColor } from '../utils/models'
 
 export default function ModelBreakdown({ modelUsage }) {
   const rows    = Object.entries(modelUsage).sort((a, b) => (b[1].cost_usd ?? 0) - (a[1].cost_usd ?? 0))
@@ -42,11 +32,11 @@ export default function ModelBreakdown({ modelUsage }) {
           </thead>
           <tbody>
             {rows.map(([model, u]) => {
-              const color  = MODEL_COLORS[model] ?? '#8b949e'
+              const color  = getModelColor(model)
               const barPct = ((u.cost_usd ?? 0) / maxCost * 100).toFixed(1) + '%'
               return (
                 <tr key={model}>
-                  <td><span className="badge" style={{ background: color + '33', color }}>{MODEL_LABELS[model] ?? model}</span></td>
+                  <td><span className="badge" style={{ background: color + '33', color }}>{getModelLabel(model)}</span></td>
                   <td>{fmtT(u.input_tokens)}</td>
                   <td>{fmtT(u.output_tokens)}</td>
                   <td>{fmtT(u.cache_creation_tokens)}</td>

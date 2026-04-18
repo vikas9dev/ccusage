@@ -157,6 +157,7 @@ docker run -d \
 
 ```bash
 docker login
+docker build --build-arg APP_VERSION=1.0.0 -t ccusage .
 docker tag ccusage vikas9dev/ccusage:latest
 docker tag ccusage vikas9dev/ccusage:1.0.0
 docker push vikas9dev/ccusage:latest
@@ -172,6 +173,7 @@ docker buildx create --use --name multiarch
 # Build & push amd64 + arm64 simultaneously
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
+  --build-arg APP_VERSION=1.0.0 \
   -t vikas9dev/ccusage:latest \
   -t vikas9dev/ccusage:1.0.0 \
   --push .

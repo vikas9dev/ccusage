@@ -53,10 +53,17 @@ export default function TokenCards({ modelUsage, period }) {
     <div className="token-cards-section">
       <div className="token-cards-header">
         <div className="section-title" style={{ marginBottom: 0 }}>Token Usage — {period}</div>
-        <div className="cache-hit-badge">
-          <span className="cache-hit-label">Cache Hit Rate</span>
-          <span className="cache-hit-value">{cacheHitRate}%</span>
-          <InfoTooltip text={`${cacheHitRate}% of your input context was served from cache. Higher = more savings. Est. saved vs re-sending: ~$${savedCost}`} />
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="savings-badge">
+            <span className="savings-label">💰 Saved</span>
+            <span className="savings-value">${savedCost}</span>
+            <InfoTooltip text={`Estimated savings from prompt caching vs re-sending context as input tokens.`} />
+          </div>
+          <div className="cache-hit-badge">
+            <span className="cache-hit-label">Cache Hit</span>
+            <span className="cache-hit-value">{cacheHitRate}%</span>
+            <InfoTooltip text={`${cacheHitRate}% of your input context was served from cache.`} />
+          </div>
         </div>
       </div>
       <div className="token-cards-grid">
